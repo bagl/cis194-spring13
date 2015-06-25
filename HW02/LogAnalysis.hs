@@ -44,7 +44,3 @@ whatWentWrong = map toMsg . filter isErr50 . inOrder . build
 
     toMsg (Unknown msg)        = msg
     toMsg (LogMessage _ _ msg) = msg
-
-
-main :: IO ()
-main = undefined
