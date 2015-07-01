@@ -8,11 +8,11 @@ import Data.List (tails, group, sort, tail, transpose, init)
 import Test.QuickCheck
 
 skips :: [a] -> [[a]]
-skips = zipWith f [0..] . init . tails
+skips = zipWith f [0..] . init . tails -- `init` cannot fail because of `tails`
 
 f :: Int -> [a] -> [a]
-f _ []      = []
-f n (y:ys)  = y : f n (drop n ys)
+f _ []     = []
+f n (y:ys) = y : f n (drop n ys)
 
 localMaxima :: [Integer] -> [Integer]
 localMaxima l = [ y | (x:y:z:_) <- tails l, y > max x z ]
@@ -32,6 +32,7 @@ histogram =
   . group
   . sort
   . (++[0..9])
+  . filter (`elem` [0..9]) -- better to take care of bad input
 
 main :: IO ()
 main = do
@@ -41,6 +42,8 @@ main = do
 
   quickCheck prop_localMaximaLength
   quickCheck prop_localMaximaElems
+
+  putStrLn $ histogram [-3,21,2,5,4,4,2,1,8,1,2,4,1,2,4,8]
   where
     prop_skipsLength :: [Int] -> Bool
     prop_skipsLength xs =
