@@ -4,11 +4,11 @@
 module HW02.LogAnalysis where
 
 import StrippedPrelude
-import HW02.Log
+import HW02.Log            (MessageType(..), LogMessage(..), MessageTree(..))
 
 import Control.Applicative ((<$>), (<*>), pure)
-import Data.Maybe (fromMaybe)
-import Text.Read (readMaybe)
+import Data.Maybe          (fromMaybe)
+import Text.Read           (readMaybe)
 
 parseMessage :: String -> LogMessage
 parseMessage line = fromMaybe (Unknown line) (pm $ words line)
@@ -23,15 +23,11 @@ parse :: String -> [LogMessage]
 parse = map parseMessage . lines
 
 insert :: LogMessage -> MessageTree -> MessageTree
-insert (Unknown _)            t            = t
-insert lm                     Leaf         = Node Leaf lm Leaf
-insert lm@(LogMessage _ ts _) (Node l m r) =
-  case m of
-    Unknown _             -> Node l m r -- should not occur if MessageTree is build with insert
-    LogMessage _ nodeTS _ ->
-      if ts < nodeTS
-        then Node (insert lm l) m r
-        else Node l             m (insert lm r)
+insert m@LogMessage{} Leaf = Node Leaf m Leaf
+insert m@(LogMessage _ t _) (Node nodeL nodeM@(LogMessage _ nodeT _) nodeR)
+  | t < nodeT = Node (insert m nodeL) nodeM nodeR
+  | otherwise = Node nodeL            nodeM (insert m nodeR)
+insert _ tree = tree
 
 build :: [LogMessage] -> MessageTree
 build = foldr insert Leaf
