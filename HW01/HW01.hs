@@ -1,4 +1,4 @@
-module HW01 where
+module HW01.HW01 where
 
 import Data.Char (digitToInt)
 

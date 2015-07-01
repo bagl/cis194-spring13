@@ -1,7 +1,7 @@
 module Main where
 
-import Log
-import LogAnalysis (parse, whatWentWrong)
+import HW02.Log
+import HW02.LogAnalysis (parse, whatWentWrong)
 
 main :: IO ()
 main = do

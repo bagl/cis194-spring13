@@ -1,10 +1,10 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# OPTIONS_GHC -Wall #-}
 
-module LogAnalysis where
+module HW02.LogAnalysis where
 
 import StrippedPrelude
-import Log
+import HW02.Log
 import Text.Read
 
 parseMessage :: String -> LogMessage

@@ -1,6 +1,6 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 
-module Golf where
+module HW03.Golf where
 
 import StrippedPrelude
 
