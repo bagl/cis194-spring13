@@ -4,4 +4,4 @@ module StrippedPrelude (
   module Prelude
 ) where
 
-import Prelude hiding ((!!), head, init, last, read, tail)
+import Prelude hiding ((!!), head, init, last, tail, read)
