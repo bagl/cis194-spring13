@@ -3,7 +3,6 @@ module HW02.Hanoi where
 
 import Control.Applicative ((<$>))
 import Control.Monad (foldM)
-import Data.List (sort)
 
 data Peg   = A | B | C | D deriving (Show)
 type Move  = (Peg, Peg)
@@ -16,10 +15,7 @@ type Hanoi4 = Int -> Peg -> Peg -> Peg -> Peg -> [Move]
 main :: IO ()
 main = case hanoiStates hanoi4 15 of
     Left  err    -> print err
-    Right states -> do
-        print $ areHanoiStatesValid states
-        print $ length states
-        putStrLn $ unlines $ map show states
+    Right states -> putStrLn $ unlines $ map show states
 
 -- | Solver for Hanoi game with 3 pegs
 hanoi3 :: Hanoi3
@@ -39,7 +35,7 @@ hanoiStates :: Hanoi4                     -- ^ Hanoi game solver for 4 pegs
 hanoiStates solver noDiscs = reverse <$> foldM prependNextState [initialState] moves
     where
         prependNextState :: [HanoiState] -> Move -> Either String [HanoiState]
-        prependNextState states@(s:_) move = (: states) <$> updateState s move
+        prependNextState states@(s:_) move = (: states) <$> makeMove s move
         prependNextState []           _    = Left "Empty list of states given to 'prependNextState'"
 
         initialState :: HanoiState
@@ -48,24 +44,17 @@ hanoiStates solver noDiscs = reverse <$> foldM prependNextState [initialState] m
         moves :: [Move]
         moves = solver noDiscs A D B C
 
--- | Given the initial game state, 'updateState' makes the move and returns either the resulting state or an error string
-updateState :: HanoiState               -- ^ Initial game state
-            -> Move                     -- ^ Move to be done
-            -> Either String HanoiState -- ^ Either error message if the move cannot be done or an updated game state
-updateState state (fromPeg, toPeg) =
-    case getDiscs fromPeg state of
-        -- Peg has a disc on it, thus OK
-         (f:fs) -> let t       = getDiscs toPeg state
-                       state'  = putDiscs toPeg (f:t) $ putDiscs fromPeg fs state
-                   in Right state'
-         -- Peg is empty and we want to draw disc from it, thus fail
-         _      -> Left $ "Cannot draw disc from peg " ++ show fromPeg ++ " in following game state: " ++ show state
-
--- | Checks that all the game states are valid, ie. that no larger disc sits on top of smaller disc
-areHanoiStatesValid :: [HanoiState] -> Bool
-areHanoiStatesValid = all isHanoiStateValid
- where isHanoiStateValid (a, b, c, d) = all isPegValid [a, b, c, d]
-       isPegValid a = a == sort a
+-- | Given the initial game state, 'makeMove' makes the move and returns either the resulting state or an error string
+makeMove :: HanoiState               -- ^ Initial game state
+         -> Move                     -- ^ Move to be done
+         -> Either String HanoiState -- ^ Either error message if the move cannot be done or an updated game state
+makeMove state (fromPeg, toPeg) = moveTopDisc (getDiscs fromPeg state) (getDiscs toPeg state)
+  where
+    moveTopDisc []     _        = Left  $ "Cannot draw disc from empty peg " ++ show fromPeg ++ " in state: " ++ show state
+    moveTopDisc (f:fs) []       = Right $ putDiscs toPeg [f]    $ putDiscs fromPeg fs state
+    moveTopDisc (f:fs) ts@(t:_)
+                | f < t         = Right $ putDiscs toPeg (f:ts) $ putDiscs fromPeg fs state
+                | otherwise     = Left  $ "Cannot move disc " ++ show f ++ " onto disc " ++ show t ++ " in state: " ++ show state
 
 -- ===================================================
 -- Substitute for `Data.Map Peg Discs`
