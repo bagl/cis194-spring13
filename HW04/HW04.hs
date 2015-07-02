@@ -35,10 +35,10 @@ foldTree = foldr f Leaf
   where f :: a -> Tree a -> Tree a
         f x Leaf = Node 0 Leaf x Leaf
         f x (Node _ lT y rT) =
-          if height lT <= height rT
+          if height lT < height rT
           then
             let lT' = f x lT
-                h   = max (height lT') (height rT)
+                h   = height rT
             in Node (h + 1) lT' y rT
           else
             let rT' = f x rT
