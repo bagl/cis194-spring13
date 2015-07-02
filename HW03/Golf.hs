@@ -4,35 +4,38 @@ module HW03.Golf where
 
 import StrippedPrelude
 
-import Data.List (tails, group, sort, tail, transpose, init)
+import Data.List (tails, group, sort, transpose, init)
 import Test.QuickCheck
 
 skips :: [a] -> [[a]]
 skips = zipWith f [0..] . init . tails -- `init` cannot fail because of `tails`
 
 f :: Int -> [a] -> [a]
-f _ []     = []
 f n (y:ys) = y : f n (drop n ys)
+f _ _      = []
 
 localMaxima :: [Integer] -> [Integer]
-localMaxima l = [ y | (x:y:z:_) <- tails l, y > max x z ]
+localMaxima l = [ y | (x:y:z:_) <- tails l, y > max x z ] -- if pattern matching fails, there cannot be any local maximum
 
 pad :: Int -> String -> String
-pad n a = a ++ replicate (n - length a) ' '
+pad n s = replicate (n - length s) ' ' ++ s
 
 histogram :: [Int] -> String
 histogram =
-  (++ "==========\n0123456789\n")
+  (++ "==========\n0123456789\n") -- append labels
   . unlines
-  . reverse
-  . tail
-  . transpose
-  . uncurry (\n -> map (pad n . map (const '*')))
-  . ((,) =<< maximum . map length)
-  . group
+  . init      -- trim row full of '*' that was added with ([0..9]++) and is always there (so init cannot fail)
+  . transpose -- make '*' go horizontally, instead of vertically
+  . uncurry (\n -> map (pad n . map (const '*'))) -- map elements of groups to '*' and pad them to length of a biggest group
+  . ((,) =<< maximum . map length) -- === maximum . map length >>= (,)
+                                   -- === \xss -> (,) (maximum . map length $ xss) xss
+                                   -- === \xss -> (maximum $ map length xss, xss)
+                                   --
+                                   -- returns length of a biggest group and the whole grouping so it can be further worked on
+  . group  -- [[0, ...], [1, ...], [2, ...] ... [9, ...]]
   . sort
-  . (++[0..9])
-  . filter (`elem` [0..9]) -- better to take care of bad input
+  . ([0..9]++)
+  -- . filter (`elem` [0..9]) -- if we need to take care of bad input
 
 main :: IO ()
 main = do
@@ -43,7 +46,7 @@ main = do
   quickCheck prop_localMaximaLength
   quickCheck prop_localMaximaElems
 
-  putStrLn $ histogram [-3,21,2,5,4,4,2,1,8,1,2,4,1,2,4,8]
+  putStrLn $ histogram [2,5,4,4,2,1,8,1,2,4,1,2,4,8]
   where
     prop_skipsLength :: [Int] -> Bool
     prop_skipsLength xs =
