@@ -64,10 +64,12 @@ myFoldl f base xs = undefined -- foldr ....
 
 -- Given n, copute all od primes up to 2n + 2
 sieveSundaram :: Integer -> [Integer]
-sieveSundaram = undefined -- function composition
-
-cartProd :: [a] -> [b] -> [(a, b)]
-cartProd xs ys = [ (x, y) | x <- xs, y <- ys ]
+sieveSundaram n = map ((+1) . (*2)) $ filter (not . (`elem` toRemove)) [1..n]
+  where toRemove = [ x
+                   | j <- [1..div n 2]
+                   , i <- [1..j]
+                   , let x = i + j + 2 * i * j
+                   , x <= n ]
 
 -- ======================================
 -- Props
@@ -103,3 +105,4 @@ main = do
   quickCheck treePropBalanced
   quickCheck xorProp
   quickCheck mapProp'
+  print $ take 501 $ sieveSundaram 2000
