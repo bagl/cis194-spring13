@@ -56,7 +56,7 @@ xor :: [Bool] -> Bool
 xor = foldr (\b acc -> if b then not acc else acc) False
 
 myFoldl :: (a -> b -> a) -> a -> [b] -> a
-myFoldl f base xs = undefined -- foldr ....
+myFoldl f base xs = undefined -- TODO: foldr ....
 
 -- Ex 4
 
