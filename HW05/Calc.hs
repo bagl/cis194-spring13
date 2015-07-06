@@ -25,25 +25,24 @@ instance Expr ExprT where
   mul = Mul
 
 instance Expr Integer where
-  lit i = i
-  add   = (+)
-  mul   = (*)
+  lit = id
+  add = (+)
+  mul = (*)
 
 instance Expr Bool where
-  lit n | n <= 0    = False
-        | otherwise = True
+  lit = (> 0)
   add = (||)
   mul = (&&)
 
 instance Expr MinMax where
   lit = MinMax
-  add (MinMax a) (MinMax b) = MinMax $ max a b
-  mul (MinMax a) (MinMax b) = MinMax $ min a b
+  add (MinMax a) (MinMax b) = lit $ max a b
+  mul (MinMax a) (MinMax b) = lit $ min a b
 
 instance Expr Mod7 where
   lit = Mod7 . (`mod` 7)
-  add (Mod7 a) (Mod7 b) = Mod7 $ (`mod` 7) $ a + b
-  mul (Mod7 a) (Mod7 b) = Mod7 $ (`mod` 7) $ a * b
+  add (Mod7 a) (Mod7 b) = lit $ a + b
+  mul (Mod7 a) (Mod7 b) = lit $ a * b
 
 main :: IO ()
 main = do
