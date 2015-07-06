@@ -1,5 +1,6 @@
 module HW04.HW04 where
 
+import Data.List ((\\))
 import Test.QuickCheck
 
 -- Ex 1
@@ -40,7 +41,7 @@ foldTree = foldr f Leaf
               lT' = f x lT
               rT' = f x rT
           in if hlT < hrT
-             then Node (succ hrT)                  lT' y rT
+             then Node (succ hrT)                    lT' y rT
              else Node (succ $ max hlT (height rT')) lT  y rT'
 
 height :: Tree a -> Integer
@@ -56,13 +57,13 @@ xor :: [Bool] -> Bool
 xor = foldr (\b acc -> if b then not acc else acc) False
 
 myFoldl :: (a -> b -> a) -> a -> [b] -> a
-myFoldl f base xs = undefined -- TODO: foldr ....
+myFoldl f base xs = foldr (\x h -> h . (`f` x)) id xs base
 
 -- Ex 4
 
 -- Given n, copute all od primes up to 2n + 2
 sieveSundaram :: Integer -> [Integer]
-sieveSundaram n = map ((+1) . (*2)) $ filter (not . (`elem` toRemove)) [1..n]
+sieveSundaram n = map ((+1) . (*2)) $ [1..n] \\ toRemove
   where toRemove = [ x
                    | j <- [1..div n 2]
                    , i <- [1..j]
@@ -103,4 +104,6 @@ main = do
   quickCheck treePropBalanced
   quickCheck xorProp
   quickCheck mapProp'
+  print $ myFoldl (flip (:)) [] [1..10]
+  print $ foldl   (flip (:)) [] [1..10]
   print $ take 501 $ sieveSundaram 2000
