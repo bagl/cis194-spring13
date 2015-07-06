@@ -1,7 +1,11 @@
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 module HW05.Calc where
 
-import HW05.ExprT
-import HW05.Parser
+import           HW05.ExprT
+import           HW05.Parser
+import qualified HW05.StackVM as VM
 
 eval :: ExprT -> Integer
 eval (Lit i) = i
@@ -44,9 +48,23 @@ instance Expr Mod7 where
   add (Mod7 a) (Mod7 b) = lit $ a + b
   mul (Mod7 a) (Mod7 b) = lit $ a * b
 
+instance Expr VM.Program where
+  lit i   = [VM.PushI i]
+  add a b = a ++ b ++ [VM.Add]
+  mul a b = a ++ b ++ [VM.Mul]
+
+compile :: String -> Maybe VM.Program
+compile = parseExp lit add mul
+
+testExp :: Expr a => Maybe a
+testExp = parseExp lit add mul "(3 * -4) + 5"
+
 main :: IO ()
 main = do
   print $ eval (Mul (Add (Lit 2) (Lit 3)) (Lit 4))
-  print $ evalStr "(2+3)*4"
-  print $ evalStr "2+3*"
-  print (mul (add (lit 2) (lit 3)) (lit 4) :: ExprT)
+  print (testExp :: Maybe Integer)
+  print (testExp :: Maybe Bool)
+  print (testExp :: Maybe MinMax)
+  print (testExp :: Maybe Mod7)
+  print (testExp :: Maybe VM.Program)
+  print $ fmap VM.stackVM $ compile "(3 * -4) + 5"
