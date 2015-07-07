@@ -73,37 +73,45 @@ sieveSundaram n = map ((+1) . (*2)) $ [1..n] \\ toRemove
 
 -- ======================================
 -- Props
-treePropBalanced :: [Int] -> Bool
-treePropBalanced xs = isBalanced $ foldTree xs
+prop_treeBalanced :: [Int] -> Bool
+prop_treeBalanced xs = isBalanced $ foldTree xs
   where isBalanced Leaf = True
         isBalanced (Node _ left _ right) =
           abs (height left - height right) <= 1
           && isBalanced left
           && isBalanced right
 
-treePropHeight :: [Int] -> Bool
-treePropHeight xs =
+prop_treeHeight :: [Int] -> Bool
+prop_treeHeight xs =
   case foldTree xs of
     Leaf                  -> True
     (Node h left _ right) -> h - 1 == max (height left) (height right)
 
-xorProp :: [Bool] -> Bool
-xorProp bs = xor bs == odd (length $ filter id bs)
+prop_xor :: [Bool] -> Bool
+prop_xor bs = xor bs == odd (length $ filter id bs)
 
-mapProp' :: [Int] -> Bool
-mapProp' xs = map' f xs == map f xs
+prop_map :: [Int] -> Bool
+prop_map xs = map' f xs == map f xs
   where f = (+2)
+
+prop_fun1 :: [Integer] -> Bool
+prop_fun1 xs = fun1 xs == fun1' xs
+
+prop_fun2 :: Positive Integer -> Bool
+prop_fun2 (Positive n) = fun2 n == fun2' n
+
+prop_foldl :: [Integer] -> Bool
+prop_foldl xs = foldl f [] xs == myFoldl f [] xs
+  where f = flip (:)
 -- ======================================
 
 main :: IO ()
 main = do
-  --quickCheck (\xs -> fun1 xs == fun1' xs)
-  --print $ map (\n -> fun2 n == fun2' n) [1..20] -- quickCheck not working
-  --print $ foldTree ['A'..'J']
-  quickCheck treePropHeight
-  quickCheck treePropBalanced
-  quickCheck xorProp
-  quickCheck mapProp'
-  print $ myFoldl (flip (:)) [] [1..10]
-  print $ foldl   (flip (:)) [] [1..10]
+  quickCheck prop_fun1
+  quickCheck prop_fun2
+  quickCheck prop_treeBalanced
+  quickCheck prop_treeHeight
+  quickCheck prop_map
+  quickCheck prop_xor
+  quickCheck prop_foldl
   print $ take 501 $ sieveSundaram 2000
