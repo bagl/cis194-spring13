@@ -3,6 +3,8 @@
 
 module HW05.Calc where
 
+import           Control.Applicative ((<$>), (<*>))
+import qualified Data.Map as M
 import           HW05.ExprT
 import           HW05.Parser
 import qualified HW05.StackVM as VM
@@ -56,6 +58,36 @@ instance Expr VM.Program where
 compile :: String -> Maybe VM.Program
 compile = parseExp lit add mul
 
+class HasVars a where
+  var :: String -> a
+
+data VarExprT = VLit Integer
+              | VAdd VarExprT VarExprT
+              | VMul VarExprT VarExprT
+              | VVar String
+  deriving (Show, Eq)
+
+instance Expr VarExprT where
+  lit = VLit
+  add = VAdd
+  mul = VMul
+
+instance HasVars VarExprT where
+  var = VVar
+
+instance Expr (M.Map String Integer -> Maybe Integer) where
+  lit i   = \_ -> Just i
+  add a b = \m -> (+) <$> a m <*> b m
+  mul a b = \m -> (*) <$> a m <*> b m
+
+instance HasVars (M.Map String Integer -> Maybe Integer) where
+  var s = \m -> M.lookup s m
+
+withVars :: [(String, Integer)]
+         -> (M.Map String Integer -> Maybe Integer)
+         -> Maybe Integer
+withVars vars expr = expr $ M.fromList vars
+
 testExp :: Expr a => Maybe a
 testExp = parseExp lit add mul "(3 * -4) + 5"
 
@@ -67,4 +99,4 @@ main = do
   print (testExp :: Maybe MinMax)
   print (testExp :: Maybe Mod7)
   print (testExp :: Maybe VM.Program)
-  print $ fmap VM.stackVM $ compile "(3 * -4) + 5"
+  print $ VM.stackVM <$> compile "(3 * -4) + 5"
