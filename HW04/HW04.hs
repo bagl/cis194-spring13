@@ -35,14 +35,15 @@ foldTree :: [a] -> Tree a
 foldTree = foldr f Leaf
   where f :: a -> Tree a -> Tree a
         f x Leaf = Node 0 Leaf x Leaf
-        f x (Node _ lT y rT) =
+        f x (Node h lT y rT) =
           let hlT = height lT
               hrT = height rT
               lT' = f x lT
               rT' = f x rT
+              hNew = succ (height rT')
           in if hlT < hrT
-             then Node (succ hrT)                    lT' y rT
-             else Node (succ $ max hlT (height rT')) lT  y rT'
+             then Node h    lT' y rT
+             else Node hNew lT  y rT'
 
 height :: Tree a -> Integer
 height Leaf            = -1
@@ -84,8 +85,7 @@ treePropHeight :: [Int] -> Bool
 treePropHeight xs =
   case foldTree xs of
     Leaf                  -> True
-    (Node h left _ right) ->
-      h == 0 || h - 1 == max (height left) (height right)
+    (Node h left _ right) -> h - 1 == max (height left) (height right)
 
 xorProp :: [Bool] -> Bool
 xorProp bs = xor bs == odd (length $ filter id bs)
