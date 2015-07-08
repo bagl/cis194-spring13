@@ -39,8 +39,11 @@ nats :: Stream Integer
 nats = streamFromSeed (+1) 1
 
 ruler :: Stream Integer
-ruler = undefined
+ruler = let f n = Cons n $ interleaveStreams (f $ succ n) (streamRepeat n)
+        in f 0 -- #haskell-beginners monochrom copyright
 {-
+ - couldn't find the way to make this run in following form
+ -
   interleaveStreams
     (streamRepeat 0)
     (interleaveStreams
