@@ -1,6 +1,7 @@
 module HW07.Scrabble where
 
 import Data.Char (toUpper)
+import Data.List (foldl')
 import Data.Map (fromList, findWithDefault)
 import Data.Monoid (Monoid, mempty, mappend)
 
@@ -24,4 +25,4 @@ score c = Score $ findWithDefault 0 (toUpper c) m
                      , ('Y',  4), ('Z', 10) ]
 
 scoreString :: String -> Score
-scoreString = foldr (mappend . score) (Score 0)
+scoreString = foldl' (flip $ mappend . score) (Score 0)

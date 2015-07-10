@@ -6,7 +6,7 @@ import Prelude hiding (foldr)
 
 import Data.Foldable (Foldable, foldr)
 import Data.Monoid (Monoid, (<>), mempty)
---import Test.QuickCheck (quickCheck, Positive(..))
+--import Test.QuickCheck
 
 import HW07.Buffer
   ( Buffer
@@ -37,6 +37,15 @@ instance Foldable (JoinList m) where
   foldr f z (Single _ x) = f x z
   foldr f z (Append _ l1 l2) = foldr f (foldr f z l2) l1
 
+instance (Sized m, Monoid m) => Sized (JoinList m a) where
+  size = size . tag
+
+-- Non-associative, right?
+-- =======================
+--instance (Monoid m, Monoid a) => Monoid (JoinList m a) where
+--  mempty = Empty
+--  mappend l1 l2 = Append (tag l1 <> tag l2) l1 l2
+
 tag :: Monoid m => JoinList m a -> m
 tag Empty          = mempty
 tag (Single m _)   = m
@@ -47,63 +56,59 @@ tag (Append m _ _) = m
       -> JoinList m a
       -> JoinList m a
 (+++) Empty Empty = Empty
-(+++) Empty l = l
-(+++) l Empty = l
-(+++) l1 l2 = Append (tag l1 <> tag l2) l1 l2
+(+++) Empty l     = l
+(+++) l Empty     = l
+(+++) l1 l2       = Append (tag l1 <> tag l2) l1 l2
 
 -- Ex 2
 --
-jlIndex :: (Monoid m, Sized m) => JoinList m a -> Int
-jlIndex = getSize . size . tag
+
+jlSize :: (Sized b, Monoid b) => JoinList b a -> Int
+jlSize = getSize . size
 
 indexJ :: (Sized b, Monoid b)
        => Int
        -> JoinList b a
        -> Maybe a
-indexJ _ Empty = Nothing
+indexJ i l
+  | i < 0   = Nothing
+  | i >= il = Nothing
+  where il  = jlSize l
+indexJ i (Append _ l1 l2)
+  | i < il1   = indexJ i l1
+  | otherwise = indexJ (i - il1) l2
+  where il1 = jlSize l1
 indexJ i l@(Single _ a)
-  | i == jlIndex l = Just a
-  | otherwise      = Nothing
-indexJ i l@(Append _ l1 l2)
-  | i >  il   = Nothing
-  | i <= il1  = indexJ i l1
-  | i >  il1  = indexJ (i - il1) l2
-  | otherwise = Nothing -- should not happen
-  where il  = jlIndex l
-        il1 = jlIndex l1
+  | i == jlSize l - 1 = Just a
+indexJ _ _ = Nothing
 
 dropJ :: (Sized b, Monoid b)
       => Int
       -> JoinList b a
       -> JoinList b a
 dropJ n l
-  | n <= 0       = l
-  | n >= il      = Empty
-  where il  = jlIndex l
-dropJ _ Empty{}  = Empty
-dropJ _ Single{} = Empty
+  | n <= 0  = l
+  | n >= il = Empty
+  where il  = jlSize l
 dropJ n (Append _ l1 l2)
   | n <= il1  = dropJ n l1 +++ l2
   | otherwise = dropJ (n - il1) l2
-  where il1 = jlIndex l1
+  where il1 = jlSize l1
+dropJ _ _ = Empty
 
 takeJ :: (Sized b, Monoid b)
       => Int
       -> JoinList b a
       -> JoinList b a
 takeJ n l
-  | n <= 0       = Empty
-  | n >= il      = l
-  where il  = jlIndex l
-takeJ _ Empty{}  = Empty
-takeJ n l@Single{}
-  | n >= il      = l
-  | otherwise    = Empty
-  where il = jlIndex l
+  | n <= 0  = Empty
+  | n >= il = l
+  where il  = jlSize l
 takeJ n (Append _ l1 l2)
   | n <= il1  = takeJ n l1
   | otherwise = l1 +++ takeJ (n - il1) l2
-  where il1 = jlIndex l1
+  where il1 = jlSize l1
+takeJ _ _ = Empty
 
 scoreLine :: String -> JoinList Score String
 scoreLine [] = Empty
@@ -115,12 +120,19 @@ scoreSizeLine s = Single (scoreString s, Size 1) s
 
 instance Buffer (JoinList (Score, Size) String) where
   toString = foldr (++) ""
-  fromString = foldr ((+++) . scoreSizeLine) Empty . lines
+  fromString = f . lines
+    where f :: [String] -> JoinList (Score, Size) String
+          f []  = Empty
+          f [x] = scoreSizeLine x
+          f xs  = let (lh, rh) = halves xs
+                  in f lh +++ f rh
+          halves :: [a] -> ([a], [a])
+          halves xs = let n = length xs `div` 2
+                      in (take n xs, drop n xs)
   line = indexJ
-  replaceLine n s b = takeJ (n-1) b +++ scoreSizeLine s +++ dropJ n b
-  numLines = getSize . snd . tag
+  replaceLine n s b = takeJ n b +++ scoreSizeLine s +++ dropJ (n+1) b
+  numLines = getSize . size
   value = getScore . fst . tag
-
 
 (!!?) :: [a] -> Int -> Maybe a
 (!!?) [] _        = Nothing
@@ -136,8 +148,17 @@ jlToList (Append _ l1 l2) = jlToList l1 ++ jlToList l2
 --main :: IO ()
 --main = do
 --  --quickCheck prop_indexJ
---  undefined
 --
 --  where
 --    prop_indexJ :: (Positive Int) -> JoinList Size Int -> Bool
 --    prop_indexJ (Positive i) jl = indexJ i jl == jlToList jl !!? i
+--
+--    joinedList :: Gen (JoinList Size Integer)
+--    joinedList = sized joinedList'
+--    joinedList' 0 = liftM (const Empty) arbitrary :: Gen (JoinList Size Integer)
+--    joinedList' 1 = Single mempty arbitrary
+--    joinedList' n | n > 1 =
+--      oneof [Empty,
+--             liftM (Single mempty) arbitrary,
+--             liftM2 (+++) sublist sublist]
+--      where sublist = joinedList' (n `div` 2)
