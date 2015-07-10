@@ -22,7 +22,8 @@ library
   -- other-extensions:    
   build-depends:
     base,
-    containers
+    containers,
+    mtl
   hs-source-dirs:
     .,
     ./HW01,
@@ -42,6 +43,7 @@ executable test
   build-depends:
     base,
     containers,
+    mtl,
     QuickCheck
   default-language:
     Haskell2010
