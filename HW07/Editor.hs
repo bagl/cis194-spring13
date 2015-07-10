@@ -22,6 +22,7 @@ data Command = View
              | Edit
              | Load String
              | Line Int
+             | NumLines
              | Next
              | Prev
              | Quit
@@ -85,6 +86,7 @@ getCommand = io $ readCom <$> getLine
     readCom inp@(c:cs) | isDigit c = maybe Noop Line (readMay inp)
                        | toUpper c == 'L' = Load (unwords $ words cs)
                        | c == '?' = Help
+                       | c == '#' = NumLines
                        | otherwise = maybe Noop read $
                                        find ((== toUpper c) . head) commands
 
@@ -128,9 +130,14 @@ doCommand Help = io . putStr . unlines $
   , "p --- move to the previous line"
   , "l --- load a file into the editor"
   , "e --- edit the current line"
+  , "# --- print the number of lines"
   , "q --- quit"
   , "? --- show this list of commands"
   ]
+
+doCommand NumLines = do
+  nl <- onBuffer numLines
+  io $ putStr $ "Number of lines: " ++ show nl ++ "\n"
 
 doCommand Noop = return ()
 
