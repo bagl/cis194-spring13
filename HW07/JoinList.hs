@@ -124,11 +124,8 @@ instance Buffer (JoinList (Score, Size) String) where
     where f :: [String] -> JoinList (Score, Size) String
           f []  = Empty
           f [x] = scoreSizeLine x
-          f xs  = let (lh, rh) = halves xs
+          f xs  = let (lh, rh) = splitAt (length xs `div` 2) xs
                   in f lh +++ f rh
-          halves :: [a] -> ([a], [a])
-          halves xs = let n = length xs `div` 2
-                      in (take n xs, drop n xs)
   line = indexJ
   replaceLine n s b = takeJ n b +++ scoreSizeLine s +++ dropJ (n+1) b
   numLines = getSize . size
