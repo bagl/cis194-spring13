@@ -5,7 +5,7 @@ module HW07.JoinList where
 import Prelude hiding (foldr)
 
 import Data.Foldable (Foldable, foldr)
-import Data.Monoid (Monoid, (<>), mempty)
+import Data.Monoid (Monoid, (<>), mempty, Endo(..), appEndo)
 --import Test.QuickCheck
 
 import HW07.Buffer
@@ -119,13 +119,14 @@ scoreSizeLine [] = Empty
 scoreSizeLine s = Single (scoreString s, Size 1) s
 
 instance Buffer (JoinList (Score, Size) String) where
-  toString = foldr (++) ""
-  fromString = f . lines
-    where f :: [String] -> JoinList (Score, Size) String
-          f []  = Empty
-          f [x] = scoreSizeLine x
-          f xs  = let (lh, rh) = splitAt (length xs `div` 2) xs
-                  in f lh +++ f rh
+  toString = foldr (++) "" -- appEndo (foldr ((<>) . Endo . (++)) mempty l) ""
+  fromString = (f =<< length) . lines
+    where f :: Int -> [String] -> JoinList (Score, Size) String
+          f _ []  = Empty
+          f _ [x] = scoreSizeLine x
+          f n xs  = let n1 = n `div` 2
+                        (lh, rh) = splitAt n1 xs
+                    in f n1 lh +++ f (n - n1) rh
   line = indexJ
   replaceLine n s b = takeJ n b +++ scoreSizeLine s +++ dropJ (n+1) b
   numLines = getSize . size
