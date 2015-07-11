@@ -1,3 +1,5 @@
+{-# LANGUAGE FlexibleInstances #-}
+
 module HW07.Scrabble where
 
 import Data.Char (toUpper)
@@ -26,5 +28,8 @@ instance Scored Char where
                        , ('U',  1), ('V',  4), ('W',  4), ('X',  8)
                        , ('Y',  4), ('Z', 10) ]
 
+instance Scored [Char] where
+  score = mconcat . map score
+
 scoreString :: String -> Score
-scoreString = mconcat . map score
+scoreString = score

@@ -1,4 +1,5 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving, FlexibleInstances #-}
+
 module HW07.Sized where
 
 import Data.Monoid
@@ -22,6 +23,9 @@ instance Sized Size where
 -- are all instances of Sized.
 instance Sized b => Sized (a,b) where
   size = size . snd
+
+instance Sized Int where
+  size = Size
 
 instance Monoid Size where
   mempty  = Size 0

@@ -1,12 +1,12 @@
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TupleSections #-}
 
 module HW07.JoinList where
 
 import Prelude hiding (foldr)
 
 import Data.Foldable (Foldable, foldr)
-import Data.Monoid (Monoid, (<>), mempty, mconcat, Endo(..), appEndo)
---import Test.QuickCheck
+import Data.Monoid (Monoid, (<>), mempty) --, mconcat, Endo(..), appEndo)
 
 import HW07.Buffer
   ( Buffer
@@ -19,6 +19,9 @@ import HW07.Buffer
 import HW07.Scrabble
 import HW07.Sized
 
+type JLScoreBuffer     = JoinList Score String
+type JLSizeBuffer      = JoinList Size String
+type JLScoreSizeBuffer = JoinList (Score, Size) String
 
 -- Ex 1
 --
@@ -26,6 +29,12 @@ data JoinList m a = Empty
                 | Single m a
                 | Append m (JoinList m a) (JoinList m a)
                 deriving (Eq, Show)
+
+empty :: JoinList m a
+empty = Empty
+
+single :: (a -> b) -> a -> JoinList b a
+single = (Single =<<)
 
 instance Functor (JoinList m) where
   fmap _ Empty            = Empty
@@ -55,9 +64,9 @@ tag (Append m _ _) = m
       => JoinList m a
       -> JoinList m a
       -> JoinList m a
-(+++) Empty l     = l
-(+++) l Empty     = l
-(+++) l1 l2       = Append (tag l1 <> tag l2) l1 l2
+(+++) Empty l = l
+(+++) l Empty = l
+(+++) l1 l2   = Append (tag l1 <> tag l2) l1 l2
 
 -- Ex 2
 --
@@ -115,23 +124,40 @@ splitAtJ :: (Sized b, Monoid b)
          -> (JoinList b a, JoinList b a)
 splitAtJ n b = (takeJ n b, dropJ n b)
 
-scoreLine :: String -> JoinList Score String
+jToList :: JoinList b a -> [a]
+jToList = foldr (:) []
+
+jFromList :: Monoid b => (a -> b) -> [a] -> JoinList b a
+jFromList f = g =<< length
+  where g _ []  = Empty
+        g _ [x] = Single (f x) x
+        g n xs  = let n1 = n `div` 2
+                      (lh, rh) = splitAt n1 xs
+                  in g n1 lh +++ g (n-n1) rh
+
+scoreSize :: Scored a => a -> (Score, Size)
+scoreSize = (, Size 1) . score
+
+singleSize :: a -> JoinList Size a
+singleSize = single $ const (Size 1)
+
+singleScore :: Scored a => a -> JoinList Score a
+singleScore = single score
+
+singleScoreSize :: Scored a => a -> JoinList (Score, Size) a
+singleScoreSize = single scoreSize
+
+scoreLine :: String -> JLScoreBuffer
 scoreLine [] = Empty
-scoreLine s  = Single =<< scoreString $ s
+scoreLine s  = singleScore s
 
-scoreSizeLine :: String -> JoinList (Score, Size) String
+scoreSizeLine :: String -> JLScoreSizeBuffer
 scoreSizeLine [] = Empty
-scoreSizeLine s = Single (scoreString s, Size 1) s
+scoreSizeLine s = singleScoreSize s
 
-instance Buffer (JoinList (Score, Size) String) where
+instance Buffer JLScoreSizeBuffer where
   toString = foldr (++) "" -- appEndo (foldr ((<>) . Endo . (++)) mempty l) ""
-  fromString = (f =<< length) . lines
-    where f :: Int -> [String] -> JoinList (Score, Size) String
-          f _ []  = Empty
-          f _ [x] = scoreSizeLine x
-          f n xs  = let n1 = n `div` 2
-                        (lh, rh) = splitAt n1 xs
-                    in f n1 lh +++ f (n - n1) rh
+  fromString = jFromList scoreSize . lines
   line = indexJ
   replaceLine n s b = let (l1, l2) = splitAtJ n b
                       in l1 +++ scoreSizeLine s +++ dropJ 1 l2
@@ -148,21 +174,3 @@ jlToList :: JoinList m a -> [a]
 jlToList Empty = []
 jlToList (Single _ a) = [a]
 jlToList (Append _ l1 l2) = jlToList l1 ++ jlToList l2
-
---main :: IO ()
---main = do
---  --quickCheck prop_indexJ
---
---  where
---    prop_indexJ :: (Positive Int) -> JoinList Size Int -> Bool
---    prop_indexJ (Positive i) jl = indexJ i jl == jlToList jl !!? i
---
---    joinedList :: Gen (JoinList Size Integer)
---    joinedList = sized joinedList'
---    joinedList' 0 = liftM (const Empty) arbitrary :: Gen (JoinList Size Integer)
---    joinedList' 1 = Single mempty arbitrary
---    joinedList' n | n > 1 =
---      oneof [Empty,
---             liftM (Single mempty) arbitrary,
---             liftM2 (+++) sublist sublist]
---      where sublist = joinedList' (n `div` 2)
