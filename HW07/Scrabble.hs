@@ -1,9 +1,8 @@
 module HW07.Scrabble where
 
 import Data.Char (toUpper)
-import Data.List (foldl')
 import Data.Map (fromList, findWithDefault)
-import Data.Monoid (Monoid, mempty, mappend)
+import Data.Monoid (Monoid, mempty, mappend, mconcat)
 
 newtype Score = Score Int deriving (Show, Eq, Ord)
 
@@ -15,7 +14,7 @@ instance Monoid Score where
   mappend (Score a) (Score b) = Score $ a + b
 
 score :: Char -> Score
-score c = Score $ findWithDefault 0 (toUpper c) m
+score = Score . flip (findWithDefault 0) m . toUpper
   where m = fromList [ ('A',  1), ('B',  3), ('C',  3), ('D',  2)
                      , ('E',  1), ('F',  4), ('G',  2), ('H',  4)
                      , ('I',  1), ('J',  8), ('K',  5), ('L',  1)
@@ -25,4 +24,4 @@ score c = Score $ findWithDefault 0 (toUpper c) m
                      , ('Y',  4), ('Z', 10) ]
 
 scoreString :: String -> Score
-scoreString = foldl' (flip $ mappend . score) (Score 0)
+scoreString = mconcat . map score
