@@ -5,7 +5,7 @@ module HW07.JoinList where
 import Prelude hiding (foldr)
 
 import Data.Foldable (Foldable, foldr)
-import Data.Monoid (Monoid, (<>), mempty, Endo(..), appEndo)
+import Data.Monoid (Monoid, (<>), mempty, mconcat, Endo(..), appEndo)
 --import Test.QuickCheck
 
 import HW07.Buffer
@@ -110,6 +110,12 @@ takeJ n (Append _ l1 l2)
   where il1 = jlSize l1
 takeJ _ _ = Empty
 
+splitAtJ :: (Sized b, Monoid b)
+         => Int
+         -> JoinList b a
+         -> (JoinList b a, JoinList b a)
+splitAtJ n b = (takeJ n b, dropJ n b)
+
 scoreLine :: String -> JoinList Score String
 scoreLine [] = Empty
 scoreLine s  = Single =<< scoreString $ s
@@ -128,7 +134,8 @@ instance Buffer (JoinList (Score, Size) String) where
                         (lh, rh) = splitAt n1 xs
                     in f n1 lh +++ f (n - n1) rh
   line = indexJ
-  replaceLine n s b = takeJ n b +++ scoreSizeLine s +++ dropJ (n+1) b
+  replaceLine n s b = let (l1, l2) = splitAtJ n b
+                      in l1 +++ scoreSizeLine s +++ dropJ 1 l2
   numLines = getSize . size
   value = getScore . fst . tag
 
