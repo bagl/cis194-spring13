@@ -55,7 +55,6 @@ tag (Append m _ _) = m
       => JoinList m a
       -> JoinList m a
       -> JoinList m a
-(+++) Empty Empty = Empty
 (+++) Empty l     = l
 (+++) l Empty     = l
 (+++) l1 l2       = Append (tag l1 <> tag l2) l1 l2
