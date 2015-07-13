@@ -17,6 +17,9 @@ instance Monoid GuestList where
 moreFun :: GuestList -> GuestList -> GuestList
 moreFun = max
 
+moreFun' :: (GuestList, GuestList) -> GuestList
+moreFun' = uncurry moreFun
+
 -- Ex 2
 treeFold :: (a -> [b] -> b) -> b -> Tree a -> b
 treeFold f z (Node a []) = f a [z]
@@ -28,11 +31,11 @@ nextLevel :: Employee
           -> (GuestList, GuestList)
 nextLevel e ls = (glCons e with, without)
  where with    = mconcat $ map snd ls
-       without = mconcat $ map (uncurry moreFun) ls
+       without = mconcat $ map moreFun' ls
 
 -- Ex 4
 maxFun :: Tree Employee -> GuestList
-maxFun = uncurry moreFun . treeFold nextLevel mempty
+maxFun = moreFun' . treeFold nextLevel mempty
 
 -- Ex 5
 main :: IO ()
