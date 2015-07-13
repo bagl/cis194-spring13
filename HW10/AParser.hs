@@ -1,4 +1,4 @@
-module AParser where
+module HW10.AParser where
 
 import           Control.Applicative
 
