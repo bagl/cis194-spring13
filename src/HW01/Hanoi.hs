@@ -1,5 +1,5 @@
 -- | Main entry point to the application.
-module HW02.Hanoi where
+module HW01.Hanoi where
 
 import Control.Applicative ((<$>))
 import Control.Monad (foldM)
