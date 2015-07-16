@@ -12,6 +12,7 @@ import Test.QuickCheck.Function
 import HW03.Golf
 import HW04.HW04
 import HW07.JoinList
+import HW07.Scrabble
 import HW07.Sized
 
 -- =============================================================
@@ -78,14 +79,14 @@ prop_foldl xs = foldl fun [] xs == myFoldl fun [] xs
 -- =============================================================
 -- HW07
 -- =============================================================
-instance (Arbitrary a) => Arbitrary (JoinList Size a) where
+instance (Arbitrary a, Scored a) => Arbitrary (JoinList (Score, Size) a) where
   arbitrary =
     frequency [ (1, return empty)
-              , (3, singleSize <$> arbitrary)
+              , (3, singleScoreSize <$> arbitrary)
               , (3, (+++) <$> arbitrary <*> arbitrary)
               ]
 
-data JLWithIndex = JLWithIndex Int (JoinList Size Int) deriving Show
+data JLWithIndex = JLWithIndex Int (JoinList (Score, Size) Int) deriving Show
 instance Arbitrary JLWithIndex where
   arbitrary = do
     jl <- arbitrary
@@ -105,7 +106,7 @@ prop_functorLaw2 :: (Functor f, Eq (f c))
 prop_functorLaw2 x (apply -> f) (apply -> g) =
   fmap (f . g) x == (fmap f . fmap g) x
 
-prop_jToList :: JoinList Size Int -> Bool
+prop_jToList :: JoinList (Score, Size) Int -> Bool
 prop_jToList jl = jlToList jl == jToList jl
 
 prop_indexJ :: JLWithIndex -> Bool
@@ -119,7 +120,7 @@ prop_dropJ :: JLWithIndex -> Bool
 prop_dropJ (JLWithIndex n jl) =
   jlToList (dropJ n jl) == drop n (jlToList jl)
 
-prop_splitAtJ :: Int -> JoinList Size Int -> Bool
+prop_splitAtJ :: Int -> JoinList (Score, Size) Int -> Bool
 prop_splitAtJ i jl =
   let (l1, l2) = splitAtJ i jl
   in (jToList l1, jToList l2) == splitAt i (jToList jl)
@@ -150,8 +151,8 @@ main = do
   -- =========================
   -- HW07
   -- =========================
-  quickCheck (prop_functorLaw1 :: JoinList Size Int -> Bool)
-  quickCheck (prop_functorLaw2 :: JoinList Size Int -> Fun Int Int -> Fun Int Int -> Bool)
+  quickCheck (prop_functorLaw1 :: JoinList (Score, Size) Int -> Bool)
+  quickCheck (prop_functorLaw2 :: JoinList (Score, Size) Int -> Fun Int Int -> Fun Int Int -> Bool)
   quickCheck prop_jToList
   quickCheck prop_indexJ
   quickCheck prop_takeJ
