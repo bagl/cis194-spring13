@@ -49,6 +49,9 @@ instance Foldable (JoinList m) where
 instance (Sized m, Monoid m) => Sized (JoinList m a) where
   size = size . tag
 
+instance Scored JLScoreSizeBuffer where
+  score = fst . tag
+
 -- Non-associative, right?
 -- =======================
 --instance (Monoid m, Monoid a) => Monoid (JoinList m a) where
@@ -152,7 +155,7 @@ instance Buffer JLScoreSizeBuffer where
   replaceLine n s b = let (l1, l2) = splitAtJ n b
                       in l1 +++ scoreSizeLine s +++ dropJ 1 l2
   numLines = getSize . size
-  value = getScore . fst . tag
+  value = getScore . score
 
 (!!?) :: [a] -> Int -> Maybe a
 (!!?) [] _        = Nothing
