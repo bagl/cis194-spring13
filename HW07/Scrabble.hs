@@ -31,5 +31,8 @@ instance Scored Char where
 instance Scored [Char] where
   score = mconcat . map score
 
+instance Scored Int where
+  score = Score
+
 scoreString :: String -> Score
 scoreString = score

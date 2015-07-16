@@ -129,8 +129,8 @@ jToList = foldr (:) []
 
 jFromList :: Monoid b => (a -> b) -> [a] -> JoinList b a
 jFromList f = g =<< length
-  where g _ []  = Empty
-        g _ [x] = Single (f x) x
+  where g _ []  = empty
+        g _ [x] = single f x
         g n xs  = let n1 = n `div` 2
                       (lh, rh) = splitAt n1 xs
                   in g n1 lh +++ g (n-n1) rh
@@ -138,18 +138,8 @@ jFromList f = g =<< length
 scoreSize :: Scored a => a -> (Score, Size)
 scoreSize = (, Size 1) . score
 
-singleSize :: a -> JoinList Size a
-singleSize = single $ const (Size 1)
-
-singleScore :: Scored a => a -> JoinList Score a
-singleScore = single score
-
 singleScoreSize :: Scored a => a -> JoinList (Score, Size) a
 singleScoreSize = single scoreSize
-
-scoreLine :: String -> JLScoreBuffer
-scoreLine [] = Empty
-scoreLine s  = singleScore s
 
 scoreSizeLine :: String -> JLScoreSizeBuffer
 scoreSizeLine [] = Empty
