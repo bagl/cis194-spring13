@@ -1,7 +1,9 @@
+{-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module HW12.Risk where
 
+import StrippedPrelude
 import Control.Applicative ((<$>))
 import Control.Monad (replicateM, foldM)
 import Control.Monad.Random
@@ -35,7 +37,8 @@ data Battlefield = Battlefield { attackers :: Army, defenders :: Army }
   deriving (Show)
 
 dieN :: Int -> Rand StdGen [DieValue]
-dieN n = sortBy (flip compare) <$> replicateM n die
+dieN n = sortDesc <$> replicateM n die
+  where sortDesc = sortBy (flip compare)
 
 limitAttackers :: Army -> Army
 limitAttackers = min 3 . pred
@@ -44,9 +47,9 @@ limitDefenders :: Army -> Army
 limitDefenders = min 2
 
 resolveThrow :: Battlefield -> (DieValue, DieValue) -> Battlefield
-resolveThrow (Battlefield as ds) (af, df)
-  | af > df   = Battlefield as        (pred ds)
-  | otherwise = Battlefield (pred as) ds
+resolveThrow bf@(Battlefield as ds) (af, df)
+  | af > df   = bf { defenders = pred ds }
+  | otherwise = bf { attackers = pred as }
 
 -- Ex 2
 battle :: Battlefield -> Rand StdGen Battlefield
@@ -57,17 +60,13 @@ battle bf = do
 
 -- Ex 3
 invade :: Battlefield -> Rand StdGen Battlefield
-invade b = do
-  b' <- battle b
-  if isFinished b'
-  then return b'
-  else invade b'
-  where isFinished (Battlefield a d) = a < 2 || d == 0
+invade b = (bool invade return =<< isFinished) =<< battle b
+  where
+    isFinished (Battlefield a d) = a < 2 || d == 0
 
 successProb :: Battlefield -> Rand StdGen Double
 successProb b = (/ noGames) <$> foldM f 0 [1..noGames]
-  where noGames = 100
-        f n _ = (n +) . b2n . attackersWin <$> invade b
-        attackersWin = (== 0) . defenders
-        b2n True  = 1
-        b2n False = 0
+  where
+    noGames = 100
+    f n _ = (n +) . bool 0 1 . attackersWin <$> invade b
+    attackersWin = (== 0) . defenders
