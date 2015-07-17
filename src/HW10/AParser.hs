@@ -66,14 +66,14 @@ instance Applicative Parser where
   p1 <*> p2 = Parser $ \s ->
     case runParser p1 s of
       Nothing      -> Nothing
-      Just (f, s1) -> first f <$> runParser p2 s1
+      Just (f, s1) -> runParser (fmap f p2) s1
 
 -- Ex 3
 abParser :: Parser (Char, Char)
 abParser = (,) <$> char 'a' <*> char 'b'
 
 skip :: Parser a -> Parser ()
-skip p = const () <$> p
+skip x = () <$ x
 
 abParser_ :: Parser ()
 abParser_ = skip abParser
