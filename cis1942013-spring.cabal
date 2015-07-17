@@ -50,6 +50,7 @@ executable test
   main-is: Test.hs
   build-depends:
     base,
+    containers,
     cis1942013-spring,
     QuickCheck
   default-language:

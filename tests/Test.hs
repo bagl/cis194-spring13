@@ -4,8 +4,9 @@
 
 module Main where
 
-import Control.Applicative ((<$>), (<*>))
+import Control.Applicative ((<$>), (<*>), pure)
 import Data.List (tails)
+import qualified Data.Tree as T
 import Test.QuickCheck
 import Test.QuickCheck.Function
 
@@ -14,6 +15,7 @@ import HW04.HW04
 import HW07.JoinList
 import HW07.Scrabble
 import HW07.Sized
+import HW08.Party hiding (main)
 
 -- =============================================================
 -- HW03
@@ -125,7 +127,19 @@ prop_splitAtJ i jl =
   let (l1, l2) = splitAtJ i jl
   in (jToList l1, jToList l2) == splitAt i (jToList jl)
 -- =============================================================
+-- HW08
+-- =============================================================
+instance Arbitrary (T.Tree Int) where
+  arbitrary = frequency
+    [ (1, t0)
+    , (5, T.Node <$> arbitrary <*> sequence [l, l]) ]
+    where
+      t3 = T.Node <$> arbitrary <*> sequence [arbitrary, arbitrary, arbitrary]
+      t0 = T.Node <$> arbitrary <*> pure []
+      l = frequency [ (1, t3)
+                    , (5, t0) ]
 
+-- =============================================================
 main :: IO ()
 main = do
   -- =========================
@@ -147,7 +161,7 @@ main = do
   quickCheck prop_map
   quickCheck prop_xor
   quickCheck prop_foldl
-  print $ take 501 $ sieveSundaram 2000
+  print $ take 20 $ sieveSundaram 1000
   -- =========================
   -- HW07
   -- =========================
@@ -159,3 +173,6 @@ main = do
   quickCheck prop_dropJ
   quickCheck prop_splitAtJ
   -- =========================
+  -- HW08
+  -- =========================
+  quickCheck (\t -> treeFold (\a as -> (a: concat as)) t == T.flatten (t :: T.Tree Int))

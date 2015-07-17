@@ -21,9 +21,8 @@ moreFun' :: (GuestList, GuestList) -> GuestList
 moreFun' = uncurry moreFun
 
 -- Ex 2
-treeFold :: (a -> [b] -> b) -> b -> Tree a -> b
-treeFold f z (Node a []) = f a [z]
-treeFold f z (Node a ts) = f a $ map (treeFold f z) ts
+treeFold :: (a -> [b] -> b) -> Tree a -> b
+treeFold f (Node a ts) = f a $ map (treeFold f) ts
 
 -- Ex 3
 nextLevel :: Employee
@@ -35,20 +34,17 @@ nextLevel e ls = (glCons e with, without)
 
 -- Ex 4
 maxFun :: Tree Employee -> GuestList
-maxFun = moreFun' . treeFold nextLevel mempty
+maxFun = moreFun' . treeFold nextLevel
 
 -- Ex 5
-main :: IO ()
-main = readFile "HW08/company.txt" >>= putStrLn . empsToGL
-  where
-    empsToGL :: String -> String
-    empsToGL = formatGL . maxFun . parseET
+instance Show GuestList where
+  show (GL es fun) =
+    let header = "Total fun: " ++ show fun
+        participants = unlines $ sort $ map empName es
+    in unlines [header, participants]
 
+main :: IO ()
+main = readFile "HW08/company.txt" >>= print . maxFun . parseET
+  where
     parseET :: String -> Tree Employee
     parseET = read
-
-    formatGL :: GuestList -> String
-    formatGL (GL es fun) =
-      let header = "Total fun: " ++ show fun
-          participants = unlines $ sort $ map empName es
-      in unlines [header, participants]
