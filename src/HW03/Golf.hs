@@ -7,6 +7,7 @@ module HW03.Golf (
 ) where
 
 import StrippedPrelude
+import qualified Prelude as P (maximum)
 
 import Data.List (tails, group, sort, transpose, init)
 
@@ -30,7 +31,7 @@ histogram =
   . init      -- trim row full of '*' that was added with ([0..9]++) and is always there (so init cannot fail)
   . transpose -- make '*' go horizontally, instead of vertically
   . uncurry (\n -> map (pad n . map (const '*'))) -- map elements of groups to '*' and pad them to length of a biggest group
-  . ((,) =<< maximum . map length) -- === maximum . map length >>= (,)
+  . ((,) =<< P.maximum . map length) -- === maximum . map length >>= (,)
                                    -- === \xss -> (,) (maximum . map length $ xss) xss
                                    -- === \xss -> (maximum $ map length xss, xss)
                                    --
