@@ -40,27 +40,35 @@ dieN :: Int -> Rand StdGen [DieValue]
 dieN n = sortDesc <$> replicateM n die
   where sortDesc = sortBy (flip compare)
 
-limitAttackers :: Army -> Army
-limitAttackers = min 3 . pred
+limitAttackers :: Battlefield -> Army
+limitAttackers = min 3 . pred . attackers
 
-limitDefenders :: Army -> Army
-limitDefenders = min 2
+limitDefenders :: Battlefield -> Army
+limitDefenders = min 2 . defenders
+
+killAttacker :: Battlefield -> Battlefield
+killAttacker (Battlefield as ds) = Battlefield (pred as) ds
+
+killDefender :: Battlefield -> Battlefield
+killDefender (Battlefield as ds) = Battlefield as (pred ds)
 
 resolveThrow :: Battlefield -> (DieValue, DieValue) -> Battlefield
-resolveThrow bf@(Battlefield as ds) (af, df)
-  | af > df   = bf { defenders = pred ds }
-  | otherwise = bf { attackers = pred as }
+resolveThrow bf (af, df)
+  | af > df   = killDefender bf
+  | otherwise = killAttacker bf
 
 -- Ex 2
 battle :: Battlefield -> Rand StdGen Battlefield
 battle bf = do
-  attack <- dieN (limitAttackers $ attackers bf)
-  defend <- dieN (limitDefenders $ defenders bf)
+  attack <- dieN $ limitAttackers bf
+  defend <- dieN $ limitDefenders bf
   return $ foldl' resolveThrow bf $ zip attack defend
 
 -- Ex 3
 invade :: Battlefield -> Rand StdGen Battlefield
-invade b = (bool invade return =<< isFinished) =<< battle b
+invade bf
+  | isFinished bf = return bf
+  | otherwise     = battle bf >>= invade
   where
     isFinished (Battlefield a d) = a < 2 || d == 0
 
