@@ -25,7 +25,7 @@ replicateA = (<$>) . replicate
 ------------------------------------------------------------
 
 zeroOrMore :: Parser a -> Parser [a]
-zeroOrMore p = ((:) <$> p <*> zeroOrMore p) <|> pure []
+zeroOrMore p = oneOrMore p <|> pure []
 
 oneOrMore :: Parser a -> Parser [a]
 oneOrMore p = (:) <$> p <*> zeroOrMore p
