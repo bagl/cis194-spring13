@@ -5,9 +5,10 @@ module HW12.Risk where
 
 import StrippedPrelude
 import Control.Applicative ((<$>))
+import Control.Arrow ((***))
 import Control.Monad (replicateM, foldM)
 import Control.Monad.Random
-import Data.List (sortBy, foldl')
+import Data.List (sortBy, foldl', genericLength)
 
 ------------------------------------------------------------
 -- Die values
@@ -73,8 +74,11 @@ invade bf
     isFinished (Battlefield a d) = a < 2 || d == 0
 
 successProb :: Battlefield -> Rand StdGen Double
-successProb b = (/ noGames) <$> foldM f 0 [1..noGames]
+successProb b = fractionOf attackersWin <$> simulate noGames (invade b)
   where
-    noGames = 100
-    f n _ = (n +) . bool 0 1 . attackersWin <$> invade b
+    noGames = 100000
+    simulate = replicateM
     attackersWin = (== 0) . defenders
+    fractionOf p = uncurry (/) . foldl' f (0, 0)
+      where f (c, l) x | p x       = (succ c, succ l)
+                       | otherwise = (c, succ l)
