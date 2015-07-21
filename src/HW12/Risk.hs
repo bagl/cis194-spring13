@@ -5,10 +5,9 @@ module HW12.Risk where
 
 import StrippedPrelude
 import Control.Applicative ((<$>))
-import Control.Arrow ((***))
-import Control.Monad (replicateM, foldM)
+import Control.Monad (replicateM)
 import Control.Monad.Random
-import Data.List (sortBy, foldl', genericLength)
+import Data.List (sortBy, foldl')
 
 ------------------------------------------------------------
 -- Die values
@@ -79,6 +78,5 @@ successProb b = fractionOf attackersWin <$> simulate noGames (invade b)
     noGames = 100000
     simulate = replicateM
     attackersWin = (== 0) . defenders
-    fractionOf p = uncurry (/) . foldl' f (0, 0)
-      where f (c, l) x | p x       = (succ c, succ l)
-                       | otherwise = (c, succ l)
+    fractionOf p = (/ fromIntegral noGames) . foldl' f 0
+      where f = flip $ bool id succ . p
